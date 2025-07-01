@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Chatbot for Test Case Design</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #1976d2;
+            --light-blue: #e3f0ff;
+            --primary-yellow: #ffe066;
+            --light-yellow: #fffbe4;
+            --header-bg: var(--primary-blue);
+            --header-fg: #fff;
+            --user-bg: linear-gradient(135deg, #1976d2 0%, #64b5f6 100%);
+            --assistant-bg: linear-gradient(135deg, #ffe066 0%, #fffbe4 100%);
+            --assistant-fg: #333;
+            --user-fg: #fff;
+            --input-bg: #fffbe4;
+            --input-border: #ffe066;
+            --button-bg: linear-gradient(135deg, #1976d2 0%, #ffe066 100%);
+            --button-fg: #fff;
+            --button-hover-bg: linear-gradient(135deg, #1565c0 0%, #ffd700 100%);
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: var(--light-blue);
+        }
+        .header {
+            background: var(--header-bg);
+            color: var(--header-fg);
+            padding: 18px 24px;
+            border-bottom: 3px solid var(--primary-yellow);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+        }
+        .header input[type="text"], .header input[type="password"] {
+            padding: 8px 12px;
+            border: 2px solid var(--input-border);
+            border-radius: 4px;
+            font-size: 1rem;
+            background: var(--input-bg);
+            transition: border 0.2s;
+            color: #333;
+        }
+        .header input:focus {
+            border: 2px solid var(--primary-blue);
+            outline: none;
+        }
+        .header label {
+            font-weight: bold;
+            color: var(--primary-yellow);
+            margin-right: 8px;
+        }
+        .header input[type="radio"] {
+            accent-color: var(--primary-yellow);
+            margin-right: 4px;
+        }
+        .chat-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 32px 0 32px 0;
+            background: var(--light-blue);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .chat-message {
+            margin: 0 24px 10px 24px;
+            padding: 14px 18px;
+            border-radius: 16px;
+            font-size: 1.08rem;
+            max-width: 65%;
+            word-break: break-word;
+            box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+            transition: background 0.2s;
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+        .user-message {
+            background: var(--user-bg);
+            color: var(--user-fg);
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .assistant-message {
+            background: var(--assistant-bg);
+            color: var(--assistant-fg);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            border: 2px solid var(--primary-yellow);
+        }
+        .input-area {
+            display: flex;
+            align-items: center;
+            padding: 18px 24px;
+            border-top: 3px solid var(--primary-yellow);
+            background: var(--header-bg);
+            gap: 12px;
+            box-shadow: 0 -2px 8px rgba(25, 118, 210, 0.08);
+        }
+        .input-area input[type="text"] {
+            flex-grow: 1;
+            padding: 12px 16px;
+            border: 2px solid var(--input-border);
+            border-radius: 4px;
+            font-size: 1.08rem;
+            background: var(--input-bg);
+            color: #333;
+            transition: border 0.2s;
+        }
+        .input-area input[type="text"]:focus {
+            border: 2px solid var(--primary-blue);
+            outline: none;
+        }
+        .input-area button {
+            padding: 12px 22px;
+            background: var(--button-bg);
+            color: var(--button-fg);
+            border: none;
+            border-radius: 4px;
+            font-size: 1.08rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+            transition: background 0.2s;
+        }
+        .input-area button:hover {
+            background: var(--button-hover-bg);
+        }
+        .input-area input[type="file"] {
+            margin-left: 0;
+            background: var(--input-bg);
+            border-radius: 4px;
+            font-size: 1rem;
+            color: #333;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-yellow);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .header, .input-area {
+                flex-direction: column;
+                gap: 8px;
+                padding: 12px;
+            }
+            .chat-message {
+                margin: 0 8px 10px 8px;
+                font-size: 1rem;
+            }
+        }
+        /* Interactive hover for chat messages */
+        .chat-message:hover {
+            box-shadow: 0 4px 16px rgba(255, 224, 102, 0.15);
+            transform: scale(1.02);
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.7.0/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.1/marked.min.js"></script>
+</head>
+<body>
+    <div class="header">
+        <input type="text" id="azureEndpoint" placeholder="Azure OpenAI Endpoint (e.g., https://your-resource.openai.azure.com/;deployment-name)">
+        <input type="password" id="azureApiKey" placeholder="Azure OpenAI API Key">
+        <label style="margin-left:20px;">
+            <input type="radio" name="mode" id="modeTestCase" value="testcase" checked>
+            Test Case Generation
+        </label>
+        <label>
+            <input type="radio" name="mode" id="modeKnowledge" value="knowledge">
+            Knowledge Management
+        </label>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+    </div>
+
+    <div id="documentContext" style="display:none;"></div> 
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="Ask about the document or design test cases...">
+        <button id="sendButton">Send</button>
+        <input type="file" id="fileUpload" accept=".pdf,.docx">
+        <div class="spinner" id="spinner"></div>
+    </div>
+
+    <script>
+        // JavaScript logic will go here
+        const chatContainer = document.getElementById('chatContainer');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const fileUpload = document.getElementById('fileUpload');
+        const documentContext = document.getElementById('documentContext');
+        const azureEndpointInput = document.getElementById('azureEndpoint');
+        const azureApiKeyInput = document.getElementById('azureApiKey');
+        const spinner = document.getElementById('spinner');
+
+        let chatHistory = []; // To store { role: 'user'/'assistant', content: 'message' }
+        let chatMode = 'testcase'; // default
+
+        document.getElementById('modeTestCase').addEventListener('change', function() {
+            if (this.checked) chatMode = 'testcase';
+        });
+        document.getElementById('modeKnowledge').addEventListener('change', function() {
+            if (this.checked) chatMode = 'knowledge';
+        });
+
+        // --- Configuration ---
+        let AZURE_OPENAI_ENDPOINT = '';
+        let AZURE_OPENAI_API_KEY = '';
+        
+        const API_VERSION = '2024-02-01'; // Check Azure OpenAI documentation for the latest stable API version
+
+        // --- Event Listeners ---
+        sendButton.addEventListener('click', handleSendMessage);
+        userInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                handleSendMessage();
+            }
+        });
+        fileUpload.addEventListener('change', handleFileUpload);
+
+        // --- Functions ---
+
+        function displayMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('chat-message', role === 'user' ? 'user-message' : 'assistant-message');
+            if (role === 'assistant') {
+                // Render Markdown for assistant messages
+                messageDiv.innerHTML = marked.parse(String(content));
+            } else {
+                // For user, just escape and show as plain text
+                messageDiv.textContent = content;
+            }
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            displayMessage('assistant', `Processing ${file.name}...`);
+            spinner.style.display = 'block';
+            let text = '';
+            try {
+                if (file.name.endsWith('.pdf')) {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const textContent = await page.getTextContent();
+                        text += textContent.items.map(item => item.str).join(' ') + '\n';
+                    }
+                } else if (file.name.endsWith('.docx')) {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+                    text = result.value;
+                } else {
+                    throw new Error('Unsupported file type. Please upload a PDF or DOCX file.');
+                }
+                documentContext.textContent = text; // Store extracted text
+                displayMessage('assistant', `Document "${file.name}" processed. You can now ask questions about it.`);
+            } catch (error) {
+                console.error('Error processing file:', error);
+                displayMessage('assistant', `Error processing file: ${error.message}`);
+                documentContext.textContent = ''; // Clear context on error
+            } finally {
+                spinner.style.display = 'none';
+                fileUpload.value = null; // Reset file input
+            }
+        }
+
+        async function handleSendMessage() {
+            AZURE_OPENAI_ENDPOINT = azureEndpointInput.value.trim();
+            AZURE_OPENAI_API_KEY = azureApiKeyInput.value.trim();            
+
+            if (!AZURE_OPENAI_ENDPOINT || !AZURE_OPENAI_API_KEY) {
+                displayMessage('assistant', 'Please provide your Azure OpenAI Endpoint and API Key in the input.');
+                return;
+            }
+
+            const userMessage = userInput.value.trim();
+            if (!userMessage) return;
+
+            displayMessage('user', userMessage);
+            chatHistory.push({ role: 'user', content: userMessage });
+            userInput.value = '';
+            spinner.style.display = 'block';
+
+            const extractedDocText = documentContext.textContent;
+            let contextForPrompt = "No document uploaded or processed yet.";
+            if (extractedDocText) {
+                // Simple RAG: Include a portion of the document text or relevant snippets.
+                // For simplicity here, we'll take a chunk. A more advanced version
+                // would do keyword search on chunks of `extractedDocText` against `userMessage`.
+                const maxContextLength = 10000; // Adjust based on token limits and needs
+                contextForPrompt = extractedDocText.substring(0, maxContextLength);
+                if (extractedDocText.length > maxContextLength) {
+                    contextForPrompt += "\n[...document truncated for brevity...]";
+                }
+            }
+
+            let systemPrompt = '';
+            if (chatMode === 'testcase') {
+                systemPrompt = `You are an AI assistant. Your primary goal is to help the user design test cases for manual software testing based on the provided document content.
+Strictly base your answers on the information found in the 'DOCUMENT CONTENT' section.
+If the information is not in the document, clearly state that.
+Do not make up information.
+When asked for test cases, provide them in a clear, actionable format (e.g., numbered list with steps or expected results if applicable). Break each test case for clarity.
+DOCUMENT CONTENT:
+---
+${contextForPrompt}
+---
+`;
+            } else {
+                systemPrompt = `You are an AI assistant for knowledge management. Answer the user's questions strictly using only the information found in the 'DOCUMENT CONTENT' section.
+If the answer is not present in the document, clearly state that you do not know.
+Do not make up information or answer from outside the document.
+DOCUMENT CONTENT:
+---
+${contextForPrompt}
+---
+`;
+            }
+
+            const messages = [
+                {
+                    role: 'system',
+                    content: systemPrompt
+                },
+                ...chatHistory
+            ];
+
+            try {
+                // const requestUrl = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${DEPLOYMENT_NAME}/chat/completions?api-version=${API_VERSION}`;
+                const response = await fetch(AZURE_OPENAI_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'api-key': AZURE_OPENAI_API_KEY
+                    },
+                    body: JSON.stringify({
+                        messages: messages,
+                        max_tokens: 1000, // Adjust as needed
+                        temperature: 0.3, // Adjust for more creative vs. factual responses
+                        // stream: false // Set to true for streaming responses, would require different handling
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: response.statusText }));
+                    console.error('Azure OpenAI API Error:', errorData);
+                    throw new Error(`API request failed with status ${response.status}: ${errorData.error?.message || errorData.message}`);
+                }
+
+                const data = await response.json();
+                const assistantMessage = data.choices[0]?.message?.content.trim();
+                if (assistantMessage) {
+                    displayMessage('assistant', assistantMessage);
+                    chatHistory.push({ role: 'assistant', content: assistantMessage });
+                } else {
+                    displayMessage('assistant', 'Sorry, I received an empty response.');
+                }
+
+            } catch (error) {
+                console.error('Error calling Azure OpenAI:', error);
+                displayMessage('assistant', `Error: ${error.message}. Check console for details. Ensure CORS is configured on your Azure OpenAI resource if running from a different origin (though for a local file, this is less common unless the browser imposes strict security).`);
+            } finally {
+                spinner.style.display = 'none';
+            }
+        }
+
+        // Initial welcome message
+        displayMessage('assistant', '👋 <b>Welcome!</b> Please provide your Azure OpenAI credentials above, then upload a <b>.docx</b> or <b>.pdf</b> document.<br>Use the <span style="color:#ffe066;font-weight:bold;">toggle</span> to switch between <b>Test Case Generation</b> and <b>Knowledge Management</b> modes.');
+    </script>
+</body>
+</html>
