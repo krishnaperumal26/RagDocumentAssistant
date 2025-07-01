@@ -208,7 +208,6 @@
     </div>
 
     <script>
-        // JavaScript logic will go here
         const chatContainer = document.getElementById('chatContainer');
         const userInput = document.getElementById('userInput');
         const sendButton = document.getElementById('sendButton');
@@ -356,7 +355,6 @@ ${contextForPrompt}
             ];
 
             try {
-                // const requestUrl = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${DEPLOYMENT_NAME}/chat/completions?api-version=${API_VERSION}`;
                 const response = await fetch(AZURE_OPENAI_ENDPOINT, {
                     method: 'POST',
                     headers: {
@@ -365,8 +363,8 @@ ${contextForPrompt}
                     },
                     body: JSON.stringify({
                         messages: messages,
-                        max_tokens: 1000, // Adjust as needed
-                        temperature: 0.3, // Adjust for more creative vs. factual responses
+                        max_tokens: 10000, // Adjust as needed
+                        temperature: 0, // Adjust for more creative vs. factual responses
                         // stream: false // Set to true for streaming responses, would require different handling
                     })
                 });
